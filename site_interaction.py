@@ -29,7 +29,7 @@ class Api:
         self.driver.quit()
 
     def wait_element(self, by, element, default_wait_delay=10, max_attempt=3):
-                    
+
         attempt = 0
         while attempt < max_attempt:
             try:
@@ -102,9 +102,11 @@ class Api:
     def get_episode_links(self):
         try:
             self.season_container()
-        except (selenium.common.exceptions.NoSuchElementException, selenium.common.exceptions.TimeoutException):
+        except (
+            selenium.common.exceptions.NoSuchElementException,
+            selenium.common.exceptions.TimeoutException,
+        ):
             pass
-
 
         self.wait_element(
             By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]"
@@ -122,15 +124,16 @@ class Api:
 
         return target_series_episode_links
 
-    def filter_text(self ,text):
-        for i in ["?",":"]:
-            text = text.replace(i,"")
+    def filter_text(self, text):
+        for i in ["?", ":"]:
+            text = text.replace(i, "")
         return text
-
 
     # Anime ismine ulas!
     def get_series_name(self):
-        series_name =  self.driver.find_element(By.XPATH, "//h1[@class='title-border']").text
+        series_name = self.driver.find_element(
+            By.XPATH, "//h1[@class='title-border']"
+        ).text
         return self.filter_text(series_name)
 
     ####DEGISTIR
@@ -143,52 +146,51 @@ class Api:
 
             self.wait_element(By.CSS_SELECTOR, "h1.title-border")
 
-            file_name = self.filter_text(self.driver.find_element(
-                By.CSS_SELECTOR, "h1.title-border"
-            ).text)
-
-            
-            self.wait_element_clickable(By.CSS_SELECTOR, "#player")
-            jwp = self.driver.find_element(By.CSS_SELECTOR, "#player")
-            jwp.click()
-
-            self.wait_element_clickable(By.CSS_SELECTOR, "div.jw-icon:nth-child(15)")
-            setting_button = self.driver.find_element(
-                By.CSS_SELECTOR, "div.jw-icon:nth-child(15)"
+            file_name = self.filter_text(
+                self.driver.find_element(By.CSS_SELECTOR, "h1.title-border").text
             )
-            setting_button.click()
 
             try:
-                self.wait_element(
-                    By.CSS_SELECTOR,
-                    "#jw-player-settings-submenu-quality > div:nth-child(1)",
-                    0.5,
-                    1,
-                )
-
-                self.wait_element_clickable(
-                    By.CSS_SELECTOR,
-                    "#jw-player-settings-submenu-quality > div:nth-child(1)",
-                    0.5,
-                    1,
-                )
-                video_quality_info_element = self.driver.find_element(
-                    By.CSS_SELECTOR,
-                    "#jw-player-settings-submenu-quality > div:nth-child(1)",
-                )
-
-                self.set_quality_settings(video_quality_info_element)
-
+                self.set_quality_settings()
             except (
-                selenium.common.exceptions.TimeoutException,
                 selenium.common.exceptions.NoSuchElementException,
+                selenium.common.exceptions.TimeoutException,
             ):
                 pass
 
             self.download_video(series_name, file_name)
 
     # Kaliteyi ayarlar
-    def set_quality_settings(self, video_quality_info_element):
+    def set_quality_settings(self):
+
+        self.wait_element_clickable(By.CSS_SELECTOR, "#player")
+
+        video_player = self.driver.find_element(By.CSS_SELECTOR, "#player")
+        video_player.click()
+
+        self.wait_element_clickable(By.CSS_SELECTOR, "div.jw-icon:nth-child(15)")
+        setting_button = self.driver.find_element(
+            By.CSS_SELECTOR, "div.jw-icon:nth-child(15)"
+        )
+        setting_button.click()
+
+        self.wait_element(
+            By.CSS_SELECTOR,
+            "#jw-player-settings-submenu-quality > div:nth-child(1)",
+            0.5,
+            1,
+        )
+
+        self.wait_element_clickable(
+            By.CSS_SELECTOR,
+            "#jw-player-settings-submenu-quality > div:nth-child(1)",
+            0.5,
+            1,
+        )
+        video_quality_info_element = self.driver.find_element(
+            By.CSS_SELECTOR,
+            "#jw-player-settings-submenu-quality > div:nth-child(1)",
+        )
 
         child_resolutions_elements = video_quality_info_element.find_elements(
             By.XPATH, "*"
@@ -203,20 +205,19 @@ class Api:
         list_res[0][1].click()
 
     def season_container(self):
-        season_list  = {}
+        season_list = {}
 
         self.wait_element(By.ID, "myBtnContainer")
         season_check = self.driver.find_element(By.ID, "myBtnContainer")
         buttons = season_check.find_elements(By.TAG_NAME, "button")
         for button in buttons:
             season = button.get_attribute("search-text").strip()
-            season_list.update({season : button})
+            season_list.update({season: button})
         if len(season_list) == 1:
             pass
         else:
             season_opinion = input("S: ")
             season_list[season_opinion].click()
-
 
     def download_video(self, series_name, file_name, path=r"D:\emby_video"):
         self.wait_element(By.CSS_SELECTOR, ".jw-video")
