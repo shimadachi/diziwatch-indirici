@@ -136,7 +136,7 @@ class Api:
         ).text
         return self.filter_text(series_name)
 
-    ####DEGISTIR
+    
     def download_series(self, target_series_episode_links):
 
         series_name = self.get_series_name()
@@ -201,8 +201,8 @@ class Api:
                 child_resolutions_element.get_attribute("aria-label").replace("p", "")
             )
             resolutions.update({resolution: child_resolutions_element})
-        list_res = sorted(resolutions.items(), reverse=True)
-        list_res[0][1].click()
+        sorted_resolutions = sorted(resolutions.items(), reverse=True)
+        sorted_resolutions[0][1].click()
 
     def season_container(self):
         season_list = {}
@@ -216,6 +216,7 @@ class Api:
         if len(season_list) == 1:
             pass
         else:
+            ###Secenek sun sectir
             season_opinion = input("S: ")
             season_list[season_opinion].click()
 
