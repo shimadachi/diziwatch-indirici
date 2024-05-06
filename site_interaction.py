@@ -6,7 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions
 import yt_dlp
 import time
-
+import questionary
+from rich.progress import Progress
 
 ###Webdriver
 
@@ -15,7 +16,7 @@ class Api:
     def __init__(self):
 
         options = webdriver.FirefoxOptions()
-        options.add_argument("-headless")
+        #options.add_argument("-headless")
         options.page_load_strategy = "eager"
         options.set_preference("permissions.default.image", 2)
         options.set_preference("media.volume_scale", "0.0")
@@ -67,18 +68,34 @@ class Api:
     def go_site(self):
         self.driver.get("https://diziwatch.net/")
 
-    # Istenen serinin sayfasina ulasir
-    def go_series(self, series):
 
+    def search(self):
         self.wait_element(By.CSS_SELECTOR, "#searchInput")
         search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
+        search_input.send_keys(input("Search:" ) + Keys.ENTER)
+
+        list_series = []
+        self.wait_element(By.XPATH, r"//*[@id='search-name']")
+        all_series = self.driver.find_elements(By.XPATH, r"//*[@id='search-name']")
+        for current_series in all_series:
+                series = current_series.text
+                list_series.append(series)
+        print(list_series)
+        return questionary.select("Animeler: ", choices=list_series).ask()
+
+    # Istenen serinin sayfasina ulasir
+    def go_series(self):
+
+        # self.wait_element(By.CSS_SELECTOR, "#searchInput")
+        # search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
+        # search_input.clear()
 
         attempt = 0
 
         while attempt < 3:
             try:
-                search_input.send_keys(series + Keys.ENTER)
+                series = self.search()
 
                 self.wait_element(
                     By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1
@@ -95,7 +112,6 @@ class Api:
                 selenium.common.exceptions.TimeoutException,
                 selenium.common.exceptions.NoSuchElementException,
             ):
-                search_input.clear()
                 attempt += 1
 
     # Serinin linklerini bir listeye atar ve return eder
@@ -217,7 +233,7 @@ class Api:
             pass
         else:
             ###Secenek sun sectir
-            season_opinion = input("S: ")
+            season_opinion = questionary.select("Sezonlar : " , choices=list(season_list.keys())).ask()
             season_list[season_opinion].click()
 
     def download_video(self, series_name, file_name, path=r"D:\emby_video"):
@@ -232,3 +248,27 @@ class Api:
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(URLS)
+
+# class Yt_progress:
+#     # class MyLogger(object):
+#     #     def debug(self, msg):
+#     #         pass
+
+#     #     def warning(self, msg):
+#     #         pass
+
+#     #     def error(self, msg):
+#     #         print(msg)
+
+
+#     with Progress() as progress:
+#         downloading = progress.add_task("[red]Downloading", total=100)
+
+#     def my_hook(self,d):
+#         if d["status"] == "downloading":
+#             percentage = float(d["_percent_str"].strip("%"))
+#             self.progress.update(self.downloading, completed=percentage)
+#         if d["status"] == "finished":
+#             print("Completed")
+
+    
