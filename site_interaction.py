@@ -8,6 +8,7 @@ import yt_dlp
 import time
 import questionary
 from rich.progress import Progress
+import re
 
 ###Webdriver
 
@@ -16,7 +17,7 @@ class Api:
     def __init__(self):
 
         options = webdriver.FirefoxOptions()
-        #options.add_argument("-headless")
+        options.add_argument("-headless")
         options.page_load_strategy = "eager"
         options.set_preference("permissions.default.image", 2)
         options.set_preference("media.volume_scale", "0.0")
@@ -68,21 +69,23 @@ class Api:
     def go_site(self):
         self.driver.get("https://diziwatch.net/")
 
-
     def search(self):
         self.wait_element(By.CSS_SELECTOR, "#searchInput")
         search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
-        search_input.send_keys(input("Search:" ) + Keys.ENTER)
+        search_input.send_keys(input("Search: ") + Keys.ENTER)
 
         list_series = []
-        self.wait_element(By.XPATH, r"//*[@id='search-name']")
+        self.wait_element(By.XPATH, r"//*[@id='search-name']", 1)
         all_series = self.driver.find_elements(By.XPATH, r"//*[@id='search-name']")
         for current_series in all_series:
-                series = current_series.text
-                list_series.append(series)
-        print(list_series)
-        return questionary.select("Animeler: ", choices=list_series).ask()
+            series = current_series.text
+            list_series.append(series)
+        if len(list_series) == 0:
+            raise ValueError
+        return questionary.select(
+            "Bulunan seriler: ", choices=list_series, qmark=""
+        ).ask()
 
     # Istenen serinin sayfasina ulasir
     def go_series(self):
@@ -91,9 +94,9 @@ class Api:
         # search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
         # search_input.clear()
 
-        attempt = 0
+        # attempt = 0
 
-        while attempt < 3:
+        while True:
             try:
                 series = self.search()
 
@@ -111,8 +114,10 @@ class Api:
             except (
                 selenium.common.exceptions.TimeoutException,
                 selenium.common.exceptions.NoSuchElementException,
+                ValueError,
             ):
-                attempt += 1
+                # attempt += 1
+                pass
 
     # Serinin linklerini bir listeye atar ve return eder
     def get_episode_links(self):
@@ -152,7 +157,6 @@ class Api:
         ).text
         return self.filter_text(series_name)
 
-    
     def download_series(self, target_series_episode_links):
 
         series_name = self.get_series_name()
@@ -233,7 +237,9 @@ class Api:
             pass
         else:
             ###Secenek sun sectir
-            season_opinion = questionary.select("Sezonlar : " , choices=list(season_list.keys())).ask()
+            season_opinion = questionary.select(
+                "Sezonlar : ", choices=list(season_list.keys())
+            ).ask()
             season_list[season_opinion].click()
 
     def download_video(self, series_name, file_name, path=r"D:\emby_video"):
@@ -245,30 +251,34 @@ class Api:
         URLS = src
         ydl_opts = {
             "outtmpl": rf"{path}\{series_name}/{file_name}.%(ext)s",
+            "ignoreerrors": True,
+            "progress_hooks": [lambda d: self.yt_hook(d)],
+            "logger": Logger(),
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download(URLS)
+        with Progress() as self.progress:
+            self.downloading = self.progress.add_task("[red]Indiriliyor", total=100)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download(URLS)
+            self.progress.remove_task(self.downloading)
 
-# class Yt_progress:
-#     # class MyLogger(object):
-#     #     def debug(self, msg):
-#     #         pass
+    # with Progress() as progress:
+    #     downloading = progress.add_task("[red]Downloading", total=100)
 
-#     #     def warning(self, msg):
-#     #         pass
+    def yt_hook(self, d):
+        if d["status"] == "downloading":
+            percentage_raw = d["_percent_str"]
+            percentage = float(re.search(rf"([0-9](?:[0-9]?).[0-9]%)", percentage_raw)[0].strip("%"))
+            self.progress.update(self.downloading, completed=percentage)
+        if d["status"] == "finished":
+            print(f"Completed --> {d["filename"]}")
 
-#     #     def error(self, msg):
-#     #         print(msg)
 
+class Logger(object):
+    def debug(self, msg):
+        pass
 
-#     with Progress() as progress:
-#         downloading = progress.add_task("[red]Downloading", total=100)
+    def warning(self, msg):
+        pass
 
-#     def my_hook(self,d):
-#         if d["status"] == "downloading":
-#             percentage = float(d["_percent_str"].strip("%"))
-#             self.progress.update(self.downloading, completed=percentage)
-#         if d["status"] == "finished":
-#             print("Completed")
-
-    
+    def error(self, msg):
+        print(msg)
