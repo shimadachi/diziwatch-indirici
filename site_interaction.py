@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions
 import yt_dlp
-import time
 import questionary
 from rich.progress import Progress
 import re
@@ -57,24 +56,6 @@ class Api:
                 attempt += 1
                 pass
 
-    # def wait_element_clickable(self, by, element, default_wait_delay=10, max_attempt=3):
-
-    #     attempt = 0
-    #     while attempt < max_attempt:
-    #         try:
-    #             WebDriverWait(self.driver, default_wait_delay).until(
-    #                 EC.element_to_be_clickable((by, element))
-    #             )
-    #             break
-    #         except (
-    #             selenium.common.exceptions.StaleElementReferenceException,
-    #             selenium.common.exceptions.ElementNotInteractableException,
-    #             selenium.common.exceptions.NoSuchElementException,
-    #             selenium.common.exceptions.TimeoutException,
-    #         ):
-    #             attempt += 1
-    #             pass
-
     def go_site(self):
         self.driver.get("https://diziwatch.net/")
 
@@ -107,12 +88,6 @@ class Api:
     # Istenen serinin sayfasina ulasir
     def go_series(self):
 
-        # self.wait_element(By.CSS_SELECTOR, "#searchInput")
-        # search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
-        # search_input.clear()
-
-        # attempt = 0
-
         while True:
             try:
                 series = self.search()
@@ -133,7 +108,6 @@ class Api:
                 selenium.common.exceptions.NoSuchElementException,
                 ValueError,
             ):
-                # attempt += 1
                 pass
 
     # Serinin linklerini bir listeye atar ve return eder

@@ -4,8 +4,8 @@ import tkinter as tk
 from tkinter import filedialog
 from os import system
 from rich.console import Console
-from rich.progress import Progress, BarColumn,TextColumn
-import time
+from rich.progress import Progress, BarColumn, TextColumn
+import sys
 
 qa_style = qa.Style(
     [
@@ -43,10 +43,12 @@ def quit_program():
         "[green] Cikis yapiliyor", spinner="point", spinner_style="white"
     ):
         api.driver_quit()
-        quit()
+        sys.exit(0)
 
 
 folder_selected = None
+
+
 def folder_select():
     if folder_selected == None:
         with console.status("Indirme yapilacak klasoru secin"):
@@ -63,17 +65,15 @@ def folder_select():
 
 try:
     while True:
-        #Cancelled by user degisecek
-        
+        # Cancelled by user degisecek
+
         choice = qa.select(
             message="Secenekler",
             choices=["Anime/Dizi indir", "Cikis yap"],
             qmark="",
             instruction=" ",
             style=qa_style,
-            
         ).ask()
-    
 
         if choice == None:
             raise KeyboardInterrupt
