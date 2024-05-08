@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import filedialog
 from os import system
 from rich.console import Console
-from rich.progress import Progress, BarColumn, TextColumn
 import sys
 
 qa_style = qa.Style(
@@ -30,7 +29,7 @@ with console.status(
 def program(folder):
 
     api.go_site()
-
+    
     api.go_series()
 
     links = api.get_episode_links()

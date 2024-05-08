@@ -253,8 +253,6 @@ class Api:
                 ydl.download(URL)
             self.progress.remove_task(self.downloading)
 
-    # with Progress() as progress:
-    #     downloading = progress.add_task("[red]Downloading", total=100)
 
     def yt_hook(self, d):
         if d["status"] == "downloading":
