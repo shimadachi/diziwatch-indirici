@@ -8,6 +8,7 @@ import yt_dlp
 import questionary
 from rich.progress import Progress
 import re
+import time
 
 ###Webdriver
 
@@ -30,23 +31,37 @@ class Api:
         self.driver.quit()
 
 
-    # 0 : default located wait
-    # 1 : wait clickable
-    def wait_element(self, by, element, default_wait_delay=10, max_attempt=3,mode = 0):
+    # 0 : default = wait located return element(s)
+    # 1 : wait clickable return element(s)
+    # 2 : wait clickable and located return element(s) 
+    def wait_and_find_element(self, by, element, default_wait_delay=10, max_attempt=3, wait_mode = 0,elements_mode = False ):
 
         attempt = 0
         while attempt < max_attempt:
             try:
-                if mode == 0:
+                if wait_mode == 0:
                     WebDriverWait(self.driver, default_wait_delay).until(
                         EC.presence_of_element_located((by, element))
                     )
-                    break
-                if mode == 1:
+                    if elements_mode == True:
+                        return self.driver.find_elements(by, element)
+                    else:
+                        return self.driver.find_element(by,element)
+                if wait_mode == 1:
                     WebDriverWait(self.driver, default_wait_delay).until(
                         EC.element_to_be_clickable((by, element))
                     )
-                    break
+                    if elements_mode == True:
+                        return self.driver.find_elements(by,element)
+                    else:
+                        return self.driver.find_element(by,element)
+                if wait_mode == 2:
+                    WebDriverWait(self.driver, default_wait_delay).until(EC.element_to_be_clickable((by, element)))
+                    WebDriverWait(self.driver, default_wait_delay).until(EC.presence_of_element_located((by, element)))
+                    if elements_mode == True:
+                        return self.driver.find_elements(by,element)
+                    else:
+                        return self.driver.find_element(by,element)
             except (
                 selenium.common.exceptions.StaleElementReferenceException,
                 selenium.common.exceptions.ElementNotInteractableException,
@@ -68,22 +83,28 @@ class Api:
             ("pointer", "fg:#fd0000"),
             ]  
         )
-        self.wait_element(By.CSS_SELECTOR, "#searchInput")
-        search_input = self.driver.find_element(By.CSS_SELECTOR, "#searchInput")
+        search_input = self.wait_and_find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
         search_input.send_keys(input("Ara: ") + Keys.ENTER)
 
         list_series = []
-        self.wait_element(By.XPATH, r"//*[@id='search-name']", 1)
-        all_series = self.driver.find_elements(By.XPATH, r"//*[@id='search-name']")
+        all_series = self.wait_and_find_element(By.XPATH, r"//*[@id='search-name']", default_wait_delay= 1, elements_mode= True)
+        if all_series == None:
+            raise ValueError
         for current_series in all_series:
             series = current_series.text
             list_series.append(series)
         if len(list_series) == 0:
             raise ValueError
-        return questionary.select(
+        
+        selected_series = questionary.select(
             "Bulunan seriler: ", choices=list_series, qmark="-->", instruction= " ",style=qa_style
         ).ask()
+
+        if selected_series == None:
+            raise ValueError
+        
+        return selected_series
 
     # Istenen serinin sayfasina ulasir
     def go_series(self):
@@ -91,25 +112,19 @@ class Api:
         while True:
             try:
                 series = self.search()
-
-                self.wait_element(
-                    By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1
-                )
-                self.wait_element(
-                    By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1, mode=1
-                )
-                target_series = self.driver.find_element(
-                    By.XPATH, rf"//div[@id='search-name' and text()='{series}']"
-                )
-                target_series.click()
-                break
+                if series == None:
+                    raise ValueError
             except (
                 selenium.common.exceptions.TimeoutException,
                 selenium.common.exceptions.NoSuchElementException,
-                ValueError,
+                ValueError,    
             ):
                 pass
-
+            else:
+                target_series = self.wait_and_find_element(
+                By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1,wait_mode=3)
+                target_series.click()
+                break
     # Serinin linklerini bir listeye atar ve return eder
     def get_episode_links(self):
         try:
@@ -120,11 +135,8 @@ class Api:
         ):
             pass
 
-        self.wait_element(
-            By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]"
-        )
-        target_series_episodes = self.driver.find_elements(
-            By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]"
+        target_series_episodes = self.wait_and_find_element(
+            By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]",elements_mode=True
         )
 
         target_series_episode_links = []
@@ -143,9 +155,7 @@ class Api:
 
     # Anime ismine ulas!
     def get_series_name(self):
-        series_name = self.driver.find_element(
-            By.XPATH, "//h1[@class='title-border']"
-        ).text
+        series_name = self.wait_and_find_element(By.XPATH,"//h1[@class='title-border']").text
         return self.filter_text(series_name)
 
     def download_series(self, target_series_episode_links,path= None):
@@ -155,11 +165,7 @@ class Api:
         for site in target_series_episode_links:
             self.driver.get(site)
 
-            self.wait_element(By.CSS_SELECTOR, "h1.title-border")
-
-            file_name = self.filter_text(
-                self.driver.find_element(By.CSS_SELECTOR, "h1.title-border").text
-            )
+            file_name = self.filter_text(self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
 
             try:
                 self.set_quality_settings()
@@ -174,38 +180,22 @@ class Api:
     # Kaliteyi ayarlar
     def set_quality_settings(self):
 
-        self.wait_element(By.CSS_SELECTOR, "#player", mode=1)
-
-        video_player = self.driver.find_element(By.CSS_SELECTOR, "#player")
+        video_player = self.wait_and_find_element(By.CSS_SELECTOR, "#player", wait_mode=1)
         video_player.click()
 
-        self.wait_element(By.CSS_SELECTOR, "div.jw-icon:nth-child(15)",mode=1)
-        setting_button = self.driver.find_element(
-            By.CSS_SELECTOR, "div.jw-icon:nth-child(15)"
-        )
+        setting_button = self.wait_and_find_element(By.CSS_SELECTOR, "div.jw-icon:nth-child(15)",wait_mode=1)
         setting_button.click()
 
-        self.wait_element(
+        video_quality_info_element = self.wait_and_find_element(
             By.CSS_SELECTOR,
             "#jw-player-settings-submenu-quality > div:nth-child(1)",
             0.5,
             1,
+            wait_mode=2
         )
-
-        self.wait_element(
-            By.CSS_SELECTOR,
-            "#jw-player-settings-submenu-quality > div:nth-child(1)",
-            0.5,
-            1,
-            mode=1
-        )
-        video_quality_info_element = self.driver.find_element(
-            By.CSS_SELECTOR,
-            "#jw-player-settings-submenu-quality > div:nth-child(1)",
-        )
-
-        child_resolutions_elements = video_quality_info_element.find_elements(
-            By.XPATH, "*"
+ 
+        child_resolutions_elements = video_quality_info_element.wait_and_find_element(
+            By.XPATH, "*", element_mode = True
         )
         resolutions = {}
         for child_resolutions_element in child_resolutions_elements:
@@ -219,9 +209,8 @@ class Api:
     def season_container(self):
         season_list = {}
 
-        self.wait_element(By.ID, "myBtnContainer")
-        season_check = self.driver.find_element(By.ID, "myBtnContainer")
-        buttons = season_check.find_elements(By.TAG_NAME, "button")
+        season_check = self.wait_and_find_element(By.ID, "myBtnContainer")
+        buttons = season_check.wait_and_find_element(By.TAG_NAME, "button", elements_mode = True)
         for button in buttons:
             season = button.get_attribute("search-text").strip()
             season_list.update({season: button})
@@ -235,8 +224,7 @@ class Api:
             season_list[season_opinion].click()
 
     def download_video(self, series_name, file_name, path= None):
-        self.wait_element(By.CSS_SELECTOR, ".jw-video")
-        video_element = self.driver.find_element(By.CSS_SELECTOR, ".jw-video")
+        video_element = self.wait_and_find_element(By.CSS_SELECTOR, ".jw-video")
         src = video_element.get_attribute("src")
         self.driver.get("about:blank")
         yt_dlp.std_headers["Referer"] = "https://diziwatch.net/"
