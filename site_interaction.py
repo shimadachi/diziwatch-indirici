@@ -122,7 +122,7 @@ class Api:
                 pass
             else:
                 target_series = self.wait_and_find_element(
-                By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1,wait_mode=3)
+                By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1,wait_mode=2)
                 target_series.click()
                 break
     # Serinin linklerini bir listeye atar ve return eder
@@ -194,8 +194,8 @@ class Api:
             wait_mode=2
         )
  
-        child_resolutions_elements = video_quality_info_element.wait_and_find_element(
-            By.XPATH, "*", element_mode = True
+        child_resolutions_elements = video_quality_info_element.find_elements(
+            By.XPATH, "*",
         )
         resolutions = {}
         for child_resolutions_element in child_resolutions_elements:
@@ -210,7 +210,8 @@ class Api:
         season_list = {}
 
         season_check = self.wait_and_find_element(By.ID, "myBtnContainer")
-        buttons = season_check.wait_and_find_element(By.TAG_NAME, "button", elements_mode = True)
+        buttons = season_check.find_elements(By.TAG_NAME, "button")
+
         for button in buttons:
             season = button.get_attribute("search-text").strip()
             season_list.update({season: button})
