@@ -5,36 +5,42 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions
 import yt_dlp
-import questionary
 from rich.progress import Progress
 import re
 import time
-
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
+from InquirerPy import get_style
 ###Webdriver
 
 
-class Api:
+class Webdriver:
     def __init__(self):
+        self.driver = None
 
+    def driver_start(self):
+    
         options = webdriver.FirefoxOptions()
         options.add_argument("-headless")
         options.page_load_strategy = "eager"
         options.set_preference("permissions.default.image", 2)
         options.set_preference("media.volume_scale", "0.0")
-        # options.set_preference("javascript.enabled", False)
-        # options.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+
 
         self.driver = webdriver.Firefox(options=options)
 
     def driver_quit(self):
-
-        self.driver.quit()
+        try:
+            self.driver.quit()
+        except AttributeError:
+            pass
 
 
     # 0 : default = wait located return element(s)
     # 1 : wait clickable return element(s)
     # 2 : wait clickable and located return element(s) 
-    def wait_and_find_element(self, by, element, default_wait_delay=10, max_attempt=3, wait_mode = 0,elements_mode = False ):
+    def wait_and_find_element(self, by, element,  default_wait_delay=10, max_attempt=3, wait_mode = 0,elements_mode = False ):
+
 
         attempt = 0
         while attempt < max_attempt:
@@ -71,18 +77,19 @@ class Api:
                 attempt += 1
                 pass
 
+
+class Api(Webdriver):
+    def __init__(self):
+        super().__init__()
+        self.selected_series = None
+        self.filtered_text = None
+
+
     def go_site(self):
         self.driver.get("https://diziwatch.net/")
 
     def search(self):
-        qa_style = questionary.Style(
-            [
-            ("question", "fg:#cd2adc bold"),
-            ("text", " fg:#23d1e3"),
-            ("answer", "fg:#23d1e3"),
-            ("pointer", "fg:#fd0000"),
-            ]  
-        )
+
         search_input = self.wait_and_find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
         search_input.send_keys(input("Ara: ") + Keys.ENTER)
@@ -97,9 +104,9 @@ class Api:
         if len(list_series) == 0:
             raise ValueError
         
-        selected_series = questionary.select(
-            "Bulunan seriler: ", choices=list_series, qmark="-->", instruction= " ",style=qa_style
-        ).ask()
+        selected_series = inquirer.select(
+            "Bulunan seriler: ", choices=list_series, qmark="-->", instruction= " ",
+        ).execute()
 
         if selected_series == None:
             raise ValueError
@@ -125,6 +132,27 @@ class Api:
                 By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1,wait_mode=2)
                 target_series.click()
                 break
+
+
+    def season_container(self):
+
+            season_list = {}
+
+            season_check = self.wait_and_find_element(By.ID, "myBtnContainer")
+            buttons = season_check.find_elements(By.TAG_NAME, "button")
+
+            for button in buttons:
+                season = button.get_attribute("search-text").strip()
+                season_list.update({season: button})
+            if len(season_list) == 1:
+                pass
+            else:
+                ###Secenek sun sectir
+                season_opinion = inquirer.select(
+                    "Sezonlar : ", choices=list(season_list.keys()),qmark="-->",instruction = " ",
+                ).execute()
+                season_list[season_opinion].click()
+
     # Serinin linklerini bir listeye atar ve return eder
     def get_episode_links(self):
         try:
@@ -135,18 +163,40 @@ class Api:
         ):
             pass
 
-        target_series_episodes = self.wait_and_find_element(
+        target_series_episodes_element = self.wait_and_find_element(
             By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]",elements_mode=True
         )
 
-        target_series_episode_links = []
+        target_series_episode_dict = {}
 
-        for episode in target_series_episodes:
+        for episode in target_series_episodes_element:
             href_element = episode.find_element(By.XPATH, ".//a[@href]")
             href = href_element.get_attribute("href")
-            target_series_episode_links.append(href)
+            target_series_episode_dict.update({href_element.text.replace("\n", "   "):  href })
+        if not target_series_episode_dict == 1:
+            target_series_episode_dict.update({"Butun bolumleri indir" : "all"})
 
-        return target_series_episode_links
+        opinion = inquirer.select(message= "Bolumler: ", choices=target_series_episode_dict, multiselect=True).execute()
+
+
+        target_series_episode_links = []
+
+        for i in opinion:
+            target_series_episode_links.append(target_series_episode_dict[i])
+
+        all_links = target_series_episode_dict.values()
+
+        if "all" in target_series_episode_links:
+            return all_links
+        else:
+            return target_series_episode_links
+
+class SeriesName:
+    def __init__(self,driver,wait_and_find_element):
+        self.driver = driver
+        self.wait_and_find_element = wait_and_find_element
+        self.series_name = None
+
 
     def filter_text(self, text):
         for i in ["?", ":"]:
@@ -158,25 +208,15 @@ class Api:
         series_name = self.wait_and_find_element(By.XPATH,"//h1[@class='title-border']").text
         return self.filter_text(series_name)
 
-    def download_series(self, target_series_episode_links,path= None):
 
-        series_name = self.get_series_name()
+class Video:
+    def __init__(self,driver,wait_and_find_element):
+        self.driver = driver
+        self.wait_and_find_element = wait_and_find_element
+        self.series_name_handler = SeriesName(self.driver, self.wait_and_find_element)
+        self.series_name = self.series_name_handler.get_series_name()
 
-        for site in target_series_episode_links:
-            self.driver.get(site)
-
-            file_name = self.filter_text(self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
-
-            try:
-                self.set_quality_settings()
-            except (
-                selenium.common.exceptions.NoSuchElementException,
-                selenium.common.exceptions.TimeoutException,
-            ):
-                pass
-
-            self.download_video(series_name, file_name,path)
-
+        
     # Kaliteyi ayarlar
     def set_quality_settings(self):
 
@@ -193,36 +233,20 @@ class Api:
             1,
             wait_mode=2
         )
- 
-        child_resolutions_elements = video_quality_info_element.find_elements(
-            By.XPATH, "*",
-        )
-        resolutions = {}
-        for child_resolutions_element in child_resolutions_elements:
-            resolution = int(
-                child_resolutions_element.get_attribute("aria-label").replace("p", "")
+        if video_quality_info_element:
+            child_resolutions_elements = video_quality_info_element.find_elements(
+                By.XPATH, "*",
             )
-            resolutions.update({resolution: child_resolutions_element})
-        sorted_resolutions = sorted(resolutions.items(), reverse=True)
-        sorted_resolutions[0][1].click()
+            resolutions = {}
+            for child_resolutions_element in child_resolutions_elements:
+                resolution = int(
+                    child_resolutions_element.get_attribute("aria-label").replace("p", "")
+                )
+                resolutions.update({resolution: child_resolutions_element})
+            sorted_resolutions = sorted(resolutions.items(), reverse=True)
+            sorted_resolutions[0][1].click()
 
-    def season_container(self):
-        season_list = {}
-
-        season_check = self.wait_and_find_element(By.ID, "myBtnContainer")
-        buttons = season_check.find_elements(By.TAG_NAME, "button")
-
-        for button in buttons:
-            season = button.get_attribute("search-text").strip()
-            season_list.update({season: button})
-        if len(season_list) == 1:
-            pass
-        else:
-            ###Secenek sun sectir
-            season_opinion = questionary.select(
-                "Sezonlar : ", choices=list(season_list.keys()),qmark="-->",instruction = " "
-            ).ask()
-            season_list[season_opinion].click()
+    
 
     def download_video(self, series_name, file_name, path= None):
         video_element = self.wait_and_find_element(By.CSS_SELECTOR, ".jw-video")
@@ -233,7 +257,7 @@ class Api:
         ydl_opts = {
             "outtmpl": rf"{path}\{series_name}/{file_name}.%(ext)s",
             "ignoreerrors": True,
-            "progress_hooks": [lambda d: self.yt_hook(d)],
+            "progress_hooks": [lambda d: self.ytdlp_hook(d)],
             "logger": Logger(),
         }
         with Progress() as self.progress:
@@ -243,7 +267,26 @@ class Api:
             self.progress.remove_task(self.downloading)
 
 
-    def yt_hook(self, d):
+
+    def download_episodes(self, target_series_episode_links,path= None):
+
+
+        for site in target_series_episode_links:
+            self.driver.get(site)
+
+            file_name = self.series_name_handler.filter_text(self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
+
+            try:
+                self.set_quality_settings()
+            except (
+                selenium.common.exceptions.NoSuchElementException,
+                selenium.common.exceptions.TimeoutException,
+            ):
+                pass
+
+            self.download_video(self.series_name, file_name,path)
+
+    def ytdlp_hook(self, d):
         if d["status"] == "downloading":
             percentage_raw = d["_percent_str"]
             percentage = float(re.search(rf"([0-9](?:[0-9]?).[0-9]%)", percentage_raw)[0].strip("%"))
