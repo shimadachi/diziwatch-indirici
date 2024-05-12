@@ -115,7 +115,6 @@ class Api(Webdriver):
 
     # Istenen serinin sayfasina ulasir
     def go_series(self):
-
         while True:
             try:
                 series = self.search()
@@ -129,9 +128,10 @@ class Api(Webdriver):
                 pass
             else:
                 target_series = self.wait_and_find_element(
-                By.XPATH, rf"//div[@id='search-name' and text()='{series}']", 1.5, 1,wait_mode=2)
+                By.XPATH, rf'//div[@id="search-name" and text()="{series}"]', 1.5, 1,wait_mode=2)
                 target_series.click()
                 break
+
 
 
     def season_container(self):
@@ -173,20 +173,22 @@ class Api(Webdriver):
             href_element = episode.find_element(By.XPATH, ".//a[@href]")
             href = href_element.get_attribute("href")
             target_series_episode_dict.update({href_element.text.replace("\n", "   "):  href })
+
+
         if not target_series_episode_dict == 1:
             target_series_episode_dict.update({"Butun bolumleri indir" : "all"})
-
+        
         opinion = inquirer.select(message= "Bolumler: ", choices=target_series_episode_dict, multiselect=True).execute()
 
-
         target_series_episode_links = []
+
 
         for i in opinion:
             target_series_episode_links.append(target_series_episode_dict[i])
 
-        all_links = target_series_episode_dict.values()
-
         if "all" in target_series_episode_links:
+            all_links = list(target_series_episode_dict.values())
+            all_links.remove("all")
             return all_links
         else:
             return target_series_episode_links
@@ -269,7 +271,6 @@ class Video:
 
 
     def download_episodes(self, target_series_episode_links,path= None):
-
 
         for site in target_series_episode_links:
             self.driver.get(site)
