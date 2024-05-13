@@ -11,7 +11,6 @@ import time
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy import get_style
-###Webdriver
 
 
 class Webdriver:
@@ -39,35 +38,27 @@ class Webdriver:
     # 0 : default = wait located return element(s)
     # 1 : wait clickable return element(s)
     # 2 : wait clickable and located return element(s) 
-    def wait_and_find_element(self, by, element,  default_wait_delay=10, max_attempt=3, wait_mode = 0,elements_mode = False ):
+    def wait_and_find_element(self, by, element,  wait_delay=10, max_attempt=3, wait_mode = 0,elements_mode = False ):
 
 
         attempt = 0
+        wait_mode_element = lambda : WebDriverWait(self.driver, wait_delay).until(
+            EC.presence_of_element_located((by, element)))
+        wait_mode_clickable = lambda :WebDriverWait(self.driver, wait_delay).until(
+            EC.element_to_be_clickable((by, element)))
         while attempt < max_attempt:
             try:
                 if wait_mode == 0:
-                    WebDriverWait(self.driver, default_wait_delay).until(
-                        EC.presence_of_element_located((by, element))
-                    )
-                    if elements_mode == True:
-                        return self.driver.find_elements(by, element)
-                    else:
-                        return self.driver.find_element(by,element)
+                    wait_mode_element()
                 if wait_mode == 1:
-                    WebDriverWait(self.driver, default_wait_delay).until(
-                        EC.element_to_be_clickable((by, element))
-                    )
-                    if elements_mode == True:
-                        return self.driver.find_elements(by,element)
-                    else:
-                        return self.driver.find_element(by,element)
+                    wait_mode_clickable()
                 if wait_mode == 2:
-                    WebDriverWait(self.driver, default_wait_delay).until(EC.element_to_be_clickable((by, element)))
-                    WebDriverWait(self.driver, default_wait_delay).until(EC.presence_of_element_located((by, element)))
-                    if elements_mode == True:
-                        return self.driver.find_elements(by,element)
-                    else:
-                        return self.driver.find_element(by,element)
+                    wait_mode_element()
+                    wait_mode_clickable()
+                if elements_mode == True:
+                    return self.driver.find_elements(by,element)
+                else:
+                    return self.driver.find_element(by,element)
             except (
                 selenium.common.exceptions.StaleElementReferenceException,
                 selenium.common.exceptions.ElementNotInteractableException,
@@ -95,7 +86,8 @@ class Api(Webdriver):
         search_input.send_keys(input("Ara: ") + Keys.ENTER)
 
         list_series = []
-        all_series = self.wait_and_find_element(By.XPATH, r"//*[@id='search-name']", default_wait_delay= 1, elements_mode= True)
+        all_series = self.wait_and_find_element(
+            By.XPATH, r"//*[@id='search-name']", wait_delay= 1, elements_mode= True)
         if all_series == None:
             raise ValueError
         for current_series in all_series:
@@ -105,7 +97,7 @@ class Api(Webdriver):
             raise ValueError
         
         selected_series = inquirer.select(
-            "Bulunan seriler: ", choices=list_series, qmark="-->", instruction= " ",
+            "Bulunan seriler: ", choices=list_series, qmark="", instruction= " ",show_cursor=False, amark="",border=True,mandatory=True
         ).execute()
 
         if selected_series == None:
@@ -149,7 +141,7 @@ class Api(Webdriver):
             else:
                 ###Secenek sun sectir
                 season_opinion = inquirer.select(
-                    "Sezonlar : ", choices=list(season_list.keys()),qmark="-->",instruction = " ",
+                    "Sezonlar : ", choices=list(season_list.keys()),qmark="",instruction = " ", amark="",border=True,mandatory=True,show_cursor=False
                 ).execute()
                 season_list[season_opinion].click()
 
@@ -178,7 +170,9 @@ class Api(Webdriver):
         if not target_series_episode_dict == 1:
             target_series_episode_dict.update({"Butun bolumleri indir" : "all"})
         
-        opinion = inquirer.select(message= "Bolumler: ", choices=target_series_episode_dict, multiselect=True).execute()
+        opinion = inquirer.select(
+            message= "Bolumler: ", choices=target_series_episode_dict, multiselect= True, show_cursor= False, qmark="",amark="",border=True
+            ).execute()
 
         target_series_episode_links = []
 
@@ -275,7 +269,8 @@ class Video:
         for site in target_series_episode_links:
             self.driver.get(site)
 
-            file_name = self.series_name_handler.filter_text(self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
+            file_name = self.series_name_handler.filter_text
+            (self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
 
             try:
                 self.set_quality_settings()
@@ -305,3 +300,21 @@ class Logger(object):
 
     def error(self, msg):
         print(msg)
+
+class InquirerSelect:
+
+    def inq(choices, message):
+        style = get_style(
+        {"marker" : "orange", "fuzzy_border" : "white", "pointer" : "red", "question" : "blue",})
+
+        return inquirer.select(
+                message= message,
+                choices= choices,
+                instruction=" ",
+                style=style,
+                show_cursor= False,
+                qmark= "",
+                amark="",
+                border=True,
+                mandatory=True,
+            ).execute()
