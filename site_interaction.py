@@ -11,6 +11,7 @@ import time
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy import get_style
+from rich.pretty import pprint
 
 
 class Webdriver:
@@ -69,6 +70,37 @@ class Webdriver:
                 pass
 
 
+class InquirerSelect:
+
+    def inq(message, choices, multi = False):
+        style = get_style(
+        {"marker" : "orange", "fuzzy_border" : "white", "pointer" : "red", "question" : "blue","answer" : "red"})
+        if multi:
+            return inquirer.select(
+                message= message,
+                choices= choices,
+                instruction=" ",
+                style=style,
+                show_cursor= False,
+                qmark= "",
+                amark="",
+                border=True,
+                mandatory=True,
+                multiselect=True
+            ).execute()
+        else:
+            return inquirer.select(
+                    message= message,
+                    choices= choices,
+                    instruction=" ",
+                    style=style,
+                    show_cursor= False,
+                    qmark= "",
+                    amark="",
+                    border=True,
+                    mandatory=True,
+                ).execute()
+
 class Api(Webdriver):
     def __init__(self):
         super().__init__()
@@ -83,7 +115,7 @@ class Api(Webdriver):
 
         search_input = self.wait_and_find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
-        search_input.send_keys(input("Ara: ") + Keys.ENTER)
+        search_input.send_keys(input("Ara: ")+ Keys.ENTER)
 
         list_series = []
         all_series = self.wait_and_find_element(
@@ -96,9 +128,8 @@ class Api(Webdriver):
         if len(list_series) == 0:
             raise ValueError
         
-        selected_series = inquirer.select(
-            "Bulunan seriler: ", choices=list_series, qmark="", instruction= " ",show_cursor=False, amark="",border=True,mandatory=True
-        ).execute()
+        selected_series = InquirerSelect.inq(
+            message= "Bulunan seriler: ", choices= list_series)
 
         if selected_series == None:
             raise ValueError
@@ -140,9 +171,8 @@ class Api(Webdriver):
                 pass
             else:
                 ###Secenek sun sectir
-                season_opinion = inquirer.select(
-                    "Sezonlar : ", choices=list(season_list.keys()),qmark="",instruction = " ", amark="",border=True,mandatory=True,show_cursor=False
-                ).execute()
+                season_opinion = InquirerSelect.inq(
+                    message= "Sezonlar : ", choices=list(season_list.keys()))
                 season_list[season_opinion].click()
 
     # Serinin linklerini bir listeye atar ve return eder
@@ -159,7 +189,7 @@ class Api(Webdriver):
             By.XPATH, "//div[contains(@class, 'bolumust') and contains(@class, 'show')]",elements_mode=True
         )
 
-        target_series_episode_dict = {}
+        target_series_episode_dict = {"Butun bolumleri indir" : "all"}
 
         for episode in target_series_episodes_element:
             href_element = episode.find_element(By.XPATH, ".//a[@href]")
@@ -167,13 +197,12 @@ class Api(Webdriver):
             target_series_episode_dict.update({href_element.text.replace("\n", "   "):  href })
 
 
-        if not target_series_episode_dict == 1:
-            target_series_episode_dict.update({"Butun bolumleri indir" : "all"})
+        if target_series_episode_dict == 1:
+            target_series_episode_dict.pop("Butun bolumleri indir")
         
-        opinion = inquirer.select(
-            message= "Bolumler: ", choices=target_series_episode_dict, multiselect= True, show_cursor= False, qmark="",amark="",border=True
-            ).execute()
-
+        opinion = InquirerSelect.inq(
+            message= "Bolumler: ", choices=target_series_episode_dict,multi=True)
+            
         target_series_episode_links = []
 
 
@@ -181,18 +210,25 @@ class Api(Webdriver):
             target_series_episode_links.append(target_series_episode_dict[i])
 
         if "all" in target_series_episode_links:
-            all_links = list(target_series_episode_dict.values())
-            all_links.remove("all")
-            return all_links
-        else:
-            return target_series_episode_links
+            target_series_episode_links = list(target_series_episode_dict.values())[1:]
 
-class SeriesName:
+        return target_series_episode_links
+
+class NameHandler:
     def __init__(self,driver,wait_and_find_element):
         self.driver = driver
         self.wait_and_find_element = wait_and_find_element
         self.series_name = None
 
+    def re_naming(self, name):
+        pattern = re.compile(rf"(.+)([0-9](?:[0-9]?)). Sezon ([0-9](?:[0-9]?)). Bölüm")
+        try:
+            groups = re.findall(pattern,name)
+
+            return f"{groups[0][0]}S{groups[0][1]} E{groups[0][2]}"
+        except IndexError:
+            return name
+            
 
     def filter_text(self, text):
         for i in ["?", ":"]:
@@ -209,8 +245,8 @@ class Video:
     def __init__(self,driver,wait_and_find_element):
         self.driver = driver
         self.wait_and_find_element = wait_and_find_element
-        self.series_name_handler = SeriesName(self.driver, self.wait_and_find_element)
-        self.series_name = self.series_name_handler.get_series_name()
+        self.name_handler = NameHandler(self.driver, self.wait_and_find_element)
+        self.series_name = self.name_handler.get_series_name()
 
         
     # Kaliteyi ayarlar
@@ -264,13 +300,17 @@ class Video:
 
 
 
-    def download_episodes(self, target_series_episode_links,path= None):
+    def download_episodes(self, target_series_episode_links,path= None,re_naming = "False"):
 
         for site in target_series_episode_links:
             self.driver.get(site)
 
-            file_name = self.series_name_handler.filter_text
-            (self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
+            file_name = self.name_handler.filter_text(
+                self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text)
+            
+            
+            if re_naming == "True":
+                file_name = self.name_handler.re_naming(file_name)
 
             try:
                 self.set_quality_settings()
@@ -288,7 +328,7 @@ class Video:
             percentage = float(re.search(rf"([0-9](?:[0-9]?).[0-9]%)", percentage_raw)[0].strip("%"))
             self.progress.update(self.downloading, completed=percentage)
         if d["status"] == "finished":
-            print(f"Indirme Tamamlandi --> {d["filename"]}")
+            print( '\033[92m' +f'Indirme Tamamlandi --> {d["filename"]}')
 
 
 class Logger(object):
@@ -301,20 +341,3 @@ class Logger(object):
     def error(self, msg):
         print(msg)
 
-class InquirerSelect:
-
-    def inq(choices, message):
-        style = get_style(
-        {"marker" : "orange", "fuzzy_border" : "white", "pointer" : "red", "question" : "blue",})
-
-        return inquirer.select(
-                message= message,
-                choices= choices,
-                instruction=" ",
-                style=style,
-                show_cursor= False,
-                qmark= "",
-                amark="",
-                border=True,
-                mandatory=True,
-            ).execute()
