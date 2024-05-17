@@ -1,5 +1,5 @@
 
-# Diziwatch-Indirici
+# diziwatch-indirici
 
 diziwatch.net icin yt-dlp ve selenium kutuphanelerini kullanan basit bir script
 
