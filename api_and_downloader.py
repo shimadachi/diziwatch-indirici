@@ -7,11 +7,9 @@ import selenium.common.exceptions
 import yt_dlp
 from rich.progress import Progress
 import re
-import time
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy.utils import get_style
-from rich.pretty import pprint
 
 
 class Webdriver:

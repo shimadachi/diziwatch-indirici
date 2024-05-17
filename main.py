@@ -1,16 +1,12 @@
-from InquirerPy import inquirer
 import tkinter as tk
 from tkinter import filedialog
 from os import system
 from rich.console import Console
 import sys
 from diziwatch_downloader.api_and_downloader import Api, Video
-from InquirerPy import get_style
 from diziwatch_downloader.api_and_downloader import InquirerSelect
 import configparser
 from InquirerPy.base.control import Choice
-from rich.pretty import pprint
-import re
 
 
 console = Console()
