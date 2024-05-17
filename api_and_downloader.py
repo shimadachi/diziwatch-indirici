@@ -12,6 +12,7 @@ from InquirerPy.base.control import Choice
 from InquirerPy.utils import get_style
 
 
+
 class Webdriver:
     def __init__(self):
         self.driver = None

@@ -10,9 +10,7 @@ from InquirerPy.base.control import Choice
 
 
 console = Console()
-
 clear_console = lambda: system("cls")
-
 api = Api()
 
 
@@ -42,11 +40,8 @@ class Config:
 def program(folder):
 
     re_naming = cfg.re_naming
-
     api.go_site()
-
     api.go_series()
-
     links = api.get_episode_links()
     video = Video(api.driver, api.wait_and_find_element)
     video.download_episodes(links, folder, re_naming)
@@ -114,21 +109,22 @@ def starter():
         while True:
 
             choice = InquirerSelect.inq(
-                message="Secenekler", choices=["Anime/Dizi indir", "Ayarlar", "Cikis yap"]
+                message="Secenekler",
+                choices=["Anime/Dizi indir", "Ayarlar", "Cikis yap"],
             )
             clear_console()
             if choice == None:
                 raise KeyboardInterrupt
 
             if choice == "Anime/Dizi indir":
-                if cfg.default_folder == "null":
+                if cfg.default_folder == "Yok":
                     folder_selected = folder_select()
                 else:
                     folder_selected = cfg.default_folder
                 print(f"Indirilecek klasor --> {folder_selected}")
                 try:
                     program(folder_selected)
-                except (KeyboardInterrupt,EOFError):
+                except (KeyboardInterrupt, EOFError):
                     pass
                 clear_console()
             if choice == "Ayarlar":
@@ -140,6 +136,7 @@ def starter():
 
     except FileNotFoundError:
         quit_program()
+
 
 if __name__ == "__main__":
     starter()
