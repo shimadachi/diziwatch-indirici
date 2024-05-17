@@ -26,18 +26,18 @@ Kullanmanız için mutlaka geckodriver kurulu ve PATH'e ekli olmalı
     
 ## Eklenecekler
 
-[ ] GUI
+- [ ] GUI
 
-[ ] chrome webdriver'a destek verilmesi
+- [ ] chrome webdriver'a destek verilmesi
 
-[ ] Selenium'a bağlılığın azaltılması
+- [ ] Selenium'a bağlılığın azaltılması
 
-[ ] Tum sezonları indirme seçeneği
+- [ ] Tum sezonları indirme seçeneği
 
-[ ] Anime/Dizi arama fonksiyonunun baştan yazılması
+- [ ] Anime/Dizi arama fonksiyonunun baştan yazılması
 
-[ ] Kodun commentlenmesi
+- [ ] Kodun commentlenmesi
 
-[ ] Hata denetimleri ve logging'in geliştirilmesi
+- [ ] Hata denetimleri ve logging'in geliştirilmesi
  
-[ ] Kodun parçalanması ve modülerliğin sağlanması
+- [ ] Kodun parçalanması ve modülerliğin sağlanması
