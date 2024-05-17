@@ -24,44 +24,20 @@ Gerekli kütüphaneler için
 Kullanmanız için mutlaka geckodriver kurulu ve PATH'e ekli olmalı  
 [Geckodriver](https://github.com/mozilla/geckodriver/releases)
     
-## Eklenmesi Hedeflenenler
+## Eklenecekler
 
-- chrome webdriver'a destek verilmesi
+[] GUI
 
-- Kodun commentlenmesi
+[] chrome webdriver'a destek verilmesi
 
-- Hata denetimleri ve logging'in geliştirilmesi
+[] Selenium'a bağlılığın azaltılması
 
-- Kodun parçalanması ve modülerliğin sağlanması
+[] Tum sezonları indirme seçeneği
 
-- Selenium'a bağlılığın azaltılması
+[] Anime/Dizi arama fonksiyonunun baştan yazılması
 
-- Tum sezonları indirme seçeneği
+[] Kodun commentlenmesi
 
-- GUI
+[] Hata denetimleri ve logging'in geliştirilmesi
 
-- Anime/Dizi arama fonksiyonunun baştan yazılması
-## License
-
-    MIT License
-
-    Copyright (c) 2024 shimadachi
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-
+[] Kodun parçalanması ve modülerliğin sağlanması
