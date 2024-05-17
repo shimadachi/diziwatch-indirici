@@ -4,9 +4,9 @@ from tkinter import filedialog
 from os import system
 from rich.console import Console
 import sys
-from site_interaction import Api, Video
+from diziwatch_downloader.api_and_downloader import Api, Video
 from InquirerPy import get_style
-from site_interaction import InquirerSelect
+from diziwatch_downloader.api_and_downloader import InquirerSelect
 import configparser
 from InquirerPy.base.control import Choice
 from rich.pretty import pprint
@@ -25,46 +25,27 @@ class Config:
         self,
     ):
         self.cfg = configparser.ConfigParser()
-        try:
-            self.check_config()
-            self.default_folder = self.cfg["GENERAL"]["default_folder"]
-            self.re_naming = self.cfg["GENERAL"]["re_naming"]
-        except (FileNotFoundError, FileExistsError,KeyError):
-            self.create_config()
-            pass
+        self.read_and_check_config()
 
     def create_config(self):
-        self.cfg["GENERAL"] = {"default_folder": "null", "re_naming" : "False"}
+        print("\033[0;31m" + "Config dosyasi olusturuluyor")
+        self.cfg["GENERAL"] = {"default_folder": "Yok", "re_naming": "Kapali"}
         with open("config.ini", "w") as configfile:
             self.cfg.write(configfile)
-            self.read_config()
+            self.read_and_check_config()
 
-
-    def read_config(self):
-        self.cfg.read("config.ini")
-        self.default_folder = self.cfg["GENERAL"]["default_folder"]
-        self.re_naming = self.cfg["GENERAL"]["re_naming"]
-        
-
-    def check_config(self):
-        self.cfg.read("config.ini")
-        self.read_config()
-        if (
-            not "GENERAL" in self.cfg.sections()
-            or not "default_folder" in self.cfg["GENERAL"]
-        ):
-            raise FileExistsError
-
-
-
-
-
+    def read_and_check_config(self):
+        try:
+            self.cfg.read("config.ini")
+            self.default_folder = self.cfg["GENERAL"]["default_folder"]
+            self.re_naming = self.cfg["GENERAL"]["re_naming"]
+        except (configparser.Error, KeyError):
+            self.create_config()
 
 
 def program(folder):
 
     re_naming = cfg.re_naming
-
 
     api.go_site()
 
@@ -99,10 +80,7 @@ cfg = Config()
 
 
 def settings():
-    try:
-        cfg.check_config()
-    except FileExistsError:
-        cfg.create_config()
+    cfg.read_and_check_config()
     choice = InquirerSelect.inq(
         message="Ayarlar",
         choices=[
@@ -119,46 +97,53 @@ def settings():
         with open("config.ini", "w") as config:
             cfg.cfg["GENERAL"]["default_folder"] = cfg.default_folder
             cfg.cfg.write(config)
-    
+
     if choice == 2:
         with open("config.ini", "w") as config:
-            if cfg.re_naming == "False":
-                nya = "True"
+            if cfg.re_naming == "Kapali":
+                re_naming_controller = "Acik"
             else:
-                nya = "False"
-            cfg.cfg["GENERAL"]["re_naming"]= nya
+                re_naming_controller = "Kapali"
+            cfg.cfg["GENERAL"]["re_naming"] = re_naming_controller
             cfg.cfg.write(config)
 
-try:
-    
-    with console.status(
-        "[green] Webdriver Baslatiliyor", spinner="point", spinner_style="white"
-    ):
-        api.driver_start()
-    while True:
 
-        choice = InquirerSelect.inq(
-            message="Secenekler", choices=["Anime/Dizi indir", "Ayarlar", "Cikis yap"]
-        )
-        clear_console()
-        if choice == None:
-            raise KeyboardInterrupt
+def starter():
+    try:
 
-        if choice == "Anime/Dizi indir":
-            if cfg.default_folder == "null":
-                folder_selected = folder_select()
-            else:
-                folder_selected = cfg.default_folder
-            print(f"Indirilecek klasor --> {folder_selected}")
-            program(folder_selected)
+        with console.status(
+            "[green] Webdriver Baslatiliyor", spinner="point", spinner_style="white"
+        ):
+            api.driver_start()
+        while True:
+
+            choice = InquirerSelect.inq(
+                message="Secenekler", choices=["Anime/Dizi indir", "Ayarlar", "Cikis yap"]
+            )
             clear_console()
-        if choice == "Ayarlar":
-            settings()
+            if choice == None:
+                raise KeyboardInterrupt
 
-        if choice == "Cikis yap":
-            quit_program()
-            break
+            if choice == "Anime/Dizi indir":
+                if cfg.default_folder == "null":
+                    folder_selected = folder_select()
+                else:
+                    folder_selected = cfg.default_folder
+                print(f"Indirilecek klasor --> {folder_selected}")
+                try:
+                    program(folder_selected)
+                except (KeyboardInterrupt,EOFError):
+                    pass
+                clear_console()
+            if choice == "Ayarlar":
+                settings()
 
+            if choice == "Cikis yap":
+                quit_program()
+                break
 
-except (KeyboardInterrupt, EOFError, FileNotFoundError):
-    quit_program()
+    except FileNotFoundError:
+        quit_program()
+
+if __name__ == "__main__":
+    starter()
