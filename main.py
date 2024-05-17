@@ -3,8 +3,8 @@ from tkinter import filedialog
 from os import system
 from rich.console import Console
 import sys
-from diziwatch_downloader.api_and_downloader import Api, Video
-from diziwatch_downloader.api_and_downloader import InquirerSelect
+from api_and_downloader import Api, Video
+from api_and_downloader import InquirerSelect
 import configparser
 from InquirerPy.base.control import Choice
 
