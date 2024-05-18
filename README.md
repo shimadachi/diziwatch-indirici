@@ -15,7 +15,7 @@ diziwatch.net icin yt-dlp ve selenium kutuphanelerini kullanan basit bir script
 
 
 ## Gereksinimler
-###Paketlenmiş script için gerek yok
+### Paketlenmiş script için gerek yok
 
 Gerekli kütüphaneler için
 ```bash
