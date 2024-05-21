@@ -7,7 +7,7 @@ from api_and_downloader import Api, Video
 from api_and_downloader import InquirerSelect
 import configparser
 from InquirerPy.base.control import Choice
-
+from termcolor import colored
 
 console = Console()
 clear_console = lambda: system("cls")
@@ -22,7 +22,7 @@ class Config:
         self.read_and_check_config()
 
     def create_config(self):
-        print("\033[0;31m" + "Config dosyasi olusturuluyor")
+        print(colored("Config dosyayı oluşturuluyor", "light_red"))
         self.cfg["GENERAL"] = {"default_folder": "Yok", "re_naming": "Kapali"}
         with open("config.ini", "w") as configfile:
             self.cfg.write(configfile)
@@ -37,9 +37,8 @@ class Config:
             self.create_config()
 
 
-def program(folder):
+def program(folder, re_naming):
 
-    re_naming = cfg.re_naming
     api.go_site()
     api.go_series()
     links = api.get_episode_links()
@@ -49,14 +48,14 @@ def program(folder):
 
 def quit_program():
     with console.status(
-        "[green] Cikis yapiliyor", spinner="point", spinner_style="white"
+        "[green] Çıkış yapılıyor", spinner="point", spinner_style="white"
     ):
         api.driver_quit()
         sys.exit(0)
 
 
 def folder_select():
-    with console.status(" :open_file_folder: [green]Indirme yapilacak klasoru secin"):
+    with console.status(" :open_file_folder: [green]İndirme yapılacak klasörü seçin"):
 
         root = tk.Tk()
         root.withdraw()
@@ -75,8 +74,8 @@ def settings():
     choice = InquirerSelect.inq(
         message="Ayarlar",
         choices=[
-            Choice(value=2, name=f"Yeniden Isimlendirme : {cfg.re_naming}"),
-            Choice(value=1, name=f"Varsayilan Klasor: {cfg.default_folder}"),
+            Choice(value=2, name=f"Yeniden İsimlendirme : {cfg.re_naming}"),
+            Choice(value=1, name=f"Varsayılan Klasör: {cfg.default_folder}"),
             Choice(value=0, name="Geri Git"),
         ],
     )
@@ -100,42 +99,37 @@ def settings():
 
 
 def starter():
-    try:
 
-        with console.status(
-            "[green] Webdriver Baslatiliyor", spinner="point", spinner_style="white"
-        ):
-            api.driver_start()
-        while True:
+    with console.status(
+        "[green] Webdriver Başlatılıyor", spinner="point", spinner_style="white"
+    ):
+        api.driver_start()
 
-            choice = InquirerSelect.inq(
-                message="Secenekler",
-                choices=["Anime/Dizi indir", "Ayarlar", "Cikis yap"],
-            )
+    while True:
+
+        choice = InquirerSelect.inq(
+            message="Seçenekler",
+            choices=["Anime/Dizi indir", "Ayarlar", "Çıkış yap"],
+        )
+        clear_console()
+        if choice == None:
+            raise KeyboardInterrupt
+
+        if choice == "Anime/Dizi indir":
+            cfg.read_and_check_config()
+            if cfg.default_folder == "Yok":
+                folder_selected = folder_select()
+            else:
+                folder_selected = cfg.default_folder
+            print(f"İndirilecek klasör --> {folder_selected}")
+            program(folder_selected, cfg.re_naming)
             clear_console()
-            if choice == None:
-                raise KeyboardInterrupt
+        if choice == "Ayarlar":
+            settings()
 
-            if choice == "Anime/Dizi indir":
-                if cfg.default_folder == "Yok":
-                    folder_selected = folder_select()
-                else:
-                    folder_selected = cfg.default_folder
-                print(f"Indirilecek klasor --> {folder_selected}")
-                try:
-                    program(folder_selected)
-                except (KeyboardInterrupt, EOFError):
-                    pass
-                clear_console()
-            if choice == "Ayarlar":
-                settings()
-
-            if choice == "Cikis yap":
-                quit_program()
-                break
-
-    except FileNotFoundError:
-        quit_program()
+        if choice == "Çıkış yap":
+            quit_program()
+            break
 
 
 if __name__ == "__main__":

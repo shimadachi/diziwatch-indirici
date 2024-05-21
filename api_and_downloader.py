@@ -10,7 +10,7 @@ import re
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy.utils import get_style
-
+from termcolor import colored
 
 
 class Webdriver:
@@ -92,7 +92,7 @@ class InquirerSelect:
             return inquirer.select(
                 message=message,
                 choices=choices,
-                instruction="Tum bolumleri secmek icin CTRL-R",
+                instruction="Tüm bölümleri seçmek için CTRL-R",
                 style=style,
                 show_cursor=False,
                 qmark="",
@@ -100,7 +100,6 @@ class InquirerSelect:
                 border=True,
                 mandatory=True,
                 multiselect=True,
-                
             ).execute()
         else:
             return inquirer.select(
@@ -129,11 +128,11 @@ class Api(Webdriver):
 
         search_input = self.wait_and_find_element(By.CSS_SELECTOR, "#searchInput")
         search_input.clear()
-        search_input.send_keys(input("Ara: ") + Keys.ENTER)
+        search_input.send_keys(input(colored("Ara: ", "light_cyan")) + Keys.ENTER)
 
         list_series = []
         all_series = self.wait_and_find_element(
-            By.XPATH, r"//*[@id='search-name']", wait_delay=1, elements_mode=True
+            By.XPATH, r"//*[@id='search-name']", wait_delay=1, max_attempt= 1, elements_mode=True
         )
         if all_series == None:
             raise ValueError
@@ -164,6 +163,7 @@ class Api(Webdriver):
                 selenium.common.exceptions.NoSuchElementException,
                 ValueError,
             ):
+                print(colored("Aradığınız anime/dizi bulunamadı", "red"))
                 pass
             else:
                 target_series = self.wait_and_find_element(
@@ -221,7 +221,9 @@ class Api(Webdriver):
             )
 
         opinion = InquirerSelect.inq(
-            message="Bolumler: ", choices=target_series_episode_dict, episode_select=True
+            message="Bölümler: ",
+            choices=target_series_episode_dict,
+            episode_select=True,
         )
 
         target_series_episode_links = []
@@ -242,7 +244,6 @@ class NameHandler:
         pattern = re.compile(rf"(.+)([0-9](?:[0-9]?)). Sezon ([0-9](?:[0-9]?)). Bölüm")
         try:
             groups = re.findall(pattern, name)
-
             return f"{groups[0][0]}S{groups[0][1]} E{groups[0][2]}"
         except IndexError:
             return name
@@ -313,11 +314,11 @@ class Video:
             "outtmpl": rf"{path}\{series_name}/{file_name}.%(ext)s",
             "ignoreerrors": True,
             "progress_hooks": [lambda d: self.ytdlp_hook(d)],
-            "logger": Logger(),
+            "logger": Yt_Logger(),
         }
         with Progress() as self.progress:
             self.downloading = self.progress.add_task(
-                "[red]Indiriliyor",
+                "[red]İndiriliyor",
                 total=100,
             )
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -356,10 +357,10 @@ class Video:
             )
             self.progress.update(self.downloading, completed=percentage)
         if d["status"] == "finished":
-            print("\033[92m" + f'Indirme Tamamlandi --> {d["filename"]}')
+            print(colored(f'İndirme Tamamlandı --> {d["filename"]}', "light_green"))
 
 
-class Logger(object):
+class Yt_Logger(object):
     def debug(self, msg):
         pass
 
