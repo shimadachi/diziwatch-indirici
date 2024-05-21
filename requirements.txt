@@ -1,4 +1,5 @@
 InquirerPy==0.3.4
 rich==13.7.1
 selenium==4.21.0
+termcolor==2.4.0
 yt_dlp==2024.4.9
