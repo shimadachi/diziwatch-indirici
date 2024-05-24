@@ -6,7 +6,6 @@ import selenium.common.exceptions
 from rich.console import Console
 
 
-
 class Api(Webdriver):
     def __init__(self):
         self.series_dict = None
@@ -19,7 +18,11 @@ class Api(Webdriver):
 
     def search(self) -> list:
         if not self.series_dict:
-            with Console().status("[yellow] Arama listesi yükleniyor", spinner="point", spinner_style="white"):
+            with Console().status(
+                "[yellow] Arama listesi yükleniyor",
+                spinner="point",
+                spinner_style="white",
+            ):
                 self.series_dict = {}
 
                 search_elements = self.wait_and_find_element(
@@ -33,10 +36,13 @@ class Api(Webdriver):
                     self.series_dict.update({name: href})
 
         series = InquirerSelect.inq(
-            message="Arama: ", choices=self.series_dict.keys(), search=True, mandatory= False
+            message="Arama: ",
+            choices=self.series_dict.keys(),
+            search=True,
+            mandatory=False,
         )
         series_link = self.series_dict.get(series)
-        
+
         return series_link
 
     def go_series(self):
@@ -57,7 +63,7 @@ class Api(Webdriver):
             pass
         else:
             season_opinion = InquirerSelect.inq(
-                message="Sezonlar : ", choices=list(season_list.keys()), mandatory= False
+                message="Sezonlar : ", choices=list(season_list.keys()), mandatory=False
             )
             season_list[season_opinion].click()
 
@@ -101,9 +107,3 @@ class Api(Webdriver):
             target_series_episode_links.append(target_series_episode_dict[i])
 
         return target_series_episode_links
-
-    def get_series_name(self) -> str:
-        series_name = self.wait_and_find_element(
-            By.XPATH, "//h1[@class='title-border']"
-        ).text
-        return self.filter_text(series_name)

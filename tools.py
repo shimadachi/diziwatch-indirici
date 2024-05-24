@@ -1,18 +1,28 @@
 from InquirerPy import inquirer
-from InquirerPy.base.control import Choice
 from InquirerPy.utils import get_style
 import re
+from selenium.webdriver.common.by import By
 
 
 class InquirerSelect:
 
     def inq(
-        message: str, choices: list, multiple_select=False, mandatory=True, search=False
+        message: str,
+        choices: list,
+        multiple_select=False,
+        mandatory=True,
+        search=False,
+        def_ins_mes=True,
     ):
+        if def_ins_mes:
+            ins_mes = "Ana menüye dönmek için CTRL-C"
+        else:
+            ins_mes = " "
+
         keybindings = {
             "skip": [{"key": "c-c"}],
             "interrupt": [{"key": "c-d"}],
-            "toggle-all": [{"key": ["c-a", "space"]}],
+            "toggle-all": [{"key": ["c-r"]}],
         }
 
         style = get_style(
@@ -28,14 +38,14 @@ class InquirerSelect:
             return inquirer.select(
                 message=message,
                 choices=choices,
-                instruction="Tüm bölümleri seçmek için CTRL-R, Birden fazla bölüm seçmek için ise TAB",
+                instruction="Tüm bölümleri seçmek için CTRL-R, Birden fazla bölüm seçmek için ise TAB, Ana menüye dönmek için CTRL-C",
                 style=style,
                 show_cursor=False,
                 qmark="",
                 amark="",
                 border=True,
                 mandatory=mandatory,
-                mandatory_message= "Bir seçenek seçmelisiniz",
+                mandatory_message="Bir seçenek seçmelisiniz",
                 multiselect=True,
                 keybindings=keybindings,
             ).execute()
@@ -44,29 +54,29 @@ class InquirerSelect:
             return inquirer.fuzzy(
                 message=message,
                 choices=choices,
-                instruction=" ",
+                instruction=ins_mes,
                 style=style,
                 qmark="",
                 amark="",
                 border=True,
                 mandatory=mandatory,
-                mandatory_message= "Bir seçenek seçmelisiniz",
+                mandatory_message="Bir seçenek seçmelisiniz",
                 multiselect=False,
                 keybindings=keybindings,
-                match_exact=True
+                match_exact=True,
             ).execute()
         else:
             return inquirer.select(
                 message=message,
                 choices=choices,
-                instruction=" ",
+                instruction=ins_mes,
                 style=style,
                 show_cursor=False,
                 qmark="",
                 amark="",
                 border=True,
                 mandatory=mandatory,
-                mandatory_message= "Bir seçenek seçmelisiniz",
+                mandatory_message="Bir seçenek seçmelisiniz",
                 keybindings=keybindings,
             ).execute()
 
@@ -85,3 +95,9 @@ class NameHandler:
         for i in ["?", ":"]:
             text = text.replace(i, "")
         return text
+
+    def get_series_name(self, wait_and_find_element) -> str:
+        series_name = wait_and_find_element(
+            By.XPATH, "//h1[@class='title-border']"
+        ).text
+        return self.filter_text(series_name)

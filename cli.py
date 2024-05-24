@@ -69,11 +69,10 @@ def settings():
         choices=[
             Choice(value=2, name=f"Yeniden İsimlendirme : {cfg.re_naming}"),
             Choice(value=1, name=f"Varsayılan Klasör: {cfg.default_folder}"),
-            Choice(value=0, name="Geri Git"),
         ],
+        mandatory=False,
     )
-    if choice == 0:
-        clear_console()
+    if not choice:
         pass
 
     if choice == 1:
@@ -100,12 +99,13 @@ def starter():
         api.driver_start()
 
     while True:
-
+        clear_console()
         choice = InquirerSelect.inq(
             message="Seçenekler",
             choices=["Anime/Dizi indir", "Ayarlar", "Çıkış yap"],
+            mandatory=False,
+            def_ins_mes=False,
         )
-        clear_console()
 
         if choice == "Anime/Dizi indir":
             cfg.read_and_check_config()
@@ -114,17 +114,21 @@ def starter():
             else:
                 folder_selected = cfg.default_folder
             api.go_site()
-            clear_console()
             try:
                 api.go_series()
                 links = api.get_episode_links()
-            except (AssertionError, KeyboardInterrupt, selenium.common.exceptions.InvalidArgumentException):
-                clear_console()
+            except (
+                AssertionError,
+                KeyboardInterrupt,
+                selenium.common.exceptions.InvalidArgumentException,
+            ):
                 continue
-            video = Video(api.driver, api.wait_and_find_element)
-            video.download_episodes(links, folder_selected, cfg.re_naming)
+            video = Video(api)
+            try:
+                video.download_episodes(links, folder_selected, cfg.re_naming)
+            except KeyboardInterrupt:
+                continue
 
-            clear_console()
         if choice == "Ayarlar":
             settings()
 

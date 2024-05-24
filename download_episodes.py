@@ -5,13 +5,15 @@ import re
 from termcolor import colored
 import selenium.common.exceptions
 from rich.progress import Progress
+from site_interaction import Api
+
 
 class Video:
-    def __init__(self, driver, wait_and_find_element):
-        self.driver = driver
-        self.wait_and_find_element = wait_and_find_element
+    def __init__(self, driver):
+        self.driver = driver.driver
+        self.wait_and_find_element = driver.wait_and_find_element
         self.name_handler = NameHandler()
-        self.series_name = self.name_handler.get_series_name()
+        self.series_name = self.name_handler.get_series_name(self.wait_and_find_element)
 
     def set_quality_settings(self):
 
@@ -59,7 +61,7 @@ class Video:
             "ignoreerrors": True,
             "progress_hooks": [lambda d: self.ytdlp_hook(d)],
             "logger": Yt_Logger(),
-            "concurrent_fragment_downloads" : 16
+            "concurrent_fragment_downloads": 2,
         }
         with Progress() as self.progress:
             self.downloading = self.progress.add_task(
