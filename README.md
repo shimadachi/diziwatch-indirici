@@ -35,10 +35,10 @@ Kullanmanız için mutlaka geckodriver kurulu ve PATH'e ekli olmalı
 
 - [ ] Tum sezonları indirme seçeneği
 
-- [ ] Anime/Dizi arama fonksiyonunun baştan yazılması
-
 - [ ] Kodun commentlenmesi
 
 - [ ] Hata denetimleri ve logging'in geliştirilmesi
+
+- [x] Anime/Dizi arama fonksiyonunun baştan yazılması
  
-- [ ] Kodun parçalanması ve modülerliğin sağlanması
+- [x] Kodun parçalanması ve modülerliğin sağlanması
