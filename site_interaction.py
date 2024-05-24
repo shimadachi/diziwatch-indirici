@@ -1,69 +1,47 @@
 from webdriver import Webdriver
-from termcolor import colored
 from tools import InquirerSelect
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import selenium.common.exceptions
+from rich.console import Console
+
+
 
 class Api(Webdriver):
     def __init__(self):
+        self.series_dict = None
         super().__init__()
 
-    def go_site(self): 
-        self.driver.get("https://diziwatch.net/")
+    def go_site(self):
+        self.driver.get(
+            "https://diziwatch.net/wp-admin/admin-ajax.php?action=data_fetch"
+        )
 
     def search(self) -> list:
+        if not self.series_dict:
+            with Console().status("[yellow] Arama listesi yükleniyor", spinner="point", spinner_style="white"):
+                self.series_dict = {}
 
-        search_input = self.wait_and_find_element(By.CSS_SELECTOR, "#searchInput")
-        search_input.clear()
-        search_input.send_keys(input(colored("Ara: ", "light_cyan")) + Keys.ENTER)
+                search_elements = self.wait_and_find_element(
+                    By.ID, "searchelement", elements_mode=True
+                )
+                for search_element in search_elements:
+                    href = search_element.find_element(
+                        By.XPATH, ".//div[@class='search-cat-img']/a"
+                    ).get_attribute("href")
+                    name = search_element.find_element(By.ID, "search-name").text
+                    self.series_dict.update({name: href})
 
-        list_series = []
-        all_series = self.wait_and_find_element(
-            By.XPATH,
-            r"//*[@id='search-name']",
-            wait_delay=1,
-            max_attempt=1,
-            elements_mode=True,
+        series = InquirerSelect.inq(
+            message="Arama: ", choices=self.series_dict.keys(), search=True, mandatory= False
         )
-        if all_series == None:
-            raise ValueError
-        for current_series in all_series:
-            series = current_series.text
-            list_series.append(series)
-
-        selected_series = InquirerSelect.inq(
-            message="Bulunan seriler: ", choices=list_series
-        )
-
-        if selected_series == None:
-            raise ValueError
-
-        return selected_series
+        series_link = self.series_dict.get(series)
+        
+        return series_link
 
     def go_series(self):
-        while True:
-            try:
-                series = self.search()
-                if series == None:
-                    raise ValueError
-            except (
-                selenium.common.exceptions.TimeoutException,
-                selenium.common.exceptions.NoSuchElementException,
-                ValueError,
-            ):
-                print(colored("Aradığınız anime/dizi bulunamadı", "red"))
-                pass
-            else:
-                target_series = self.wait_and_find_element(
-                    By.XPATH,
-                    rf'//div[@id="search-name" and text()="{series}"]',
-                    1.5,
-                    1,
-                    wait_mode=2,
-                )
-                target_series.click()
-                break
+        series = self.search()
+        self.driver.get(series)
 
     def season_container(self):
 
@@ -79,7 +57,7 @@ class Api(Webdriver):
             pass
         else:
             season_opinion = InquirerSelect.inq(
-                message="Sezonlar : ", choices=list(season_list.keys())
+                message="Sezonlar : ", choices=list(season_list.keys()), mandatory= False
             )
             season_list[season_opinion].click()
 
@@ -110,8 +88,12 @@ class Api(Webdriver):
         opinion = InquirerSelect.inq(
             message="Bölümler: ",
             choices=target_series_episode_dict,
-            episode_select=True,
+            multiple_select=True,
+            mandatory=False,
         )
+
+        if not opinion:
+            raise AssertionError
 
         target_series_episode_links = []
 
@@ -119,7 +101,7 @@ class Api(Webdriver):
             target_series_episode_links.append(target_series_episode_dict[i])
 
         return target_series_episode_links
-    
+
     def get_series_name(self) -> str:
         series_name = self.wait_and_find_element(
             By.XPATH, "//h1[@class='title-border']"

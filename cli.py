@@ -9,6 +9,7 @@ from download_episodes import Video
 import configparser
 from InquirerPy.base.control import Choice
 from termcolor import colored
+import selenium.common.exceptions
 
 console = Console()
 clear_console = lambda: system("cls")
@@ -36,15 +37,6 @@ class Config:
             self.re_naming = self.cfg["GENERAL"]["re_naming"]
         except (configparser.Error, KeyError):
             self.create_config()
-
-
-def program(folder, re_naming):
-
-    api.go_site()
-    api.go_series()
-    links = api.get_episode_links()
-    video = Video(api.driver, api.wait_and_find_element)
-    video.download_episodes(links, folder, re_naming)
 
 
 def quit_program():
@@ -81,6 +73,7 @@ def settings():
         ],
     )
     if choice == 0:
+        clear_console()
         pass
 
     if choice == 1:
@@ -100,7 +93,7 @@ def settings():
 
 
 def starter():
-
+    clear_console()
     with console.status(
         "[green] Webdriver Başlatılıyor", spinner="point", spinner_style="white"
     ):
@@ -113,8 +106,6 @@ def starter():
             choices=["Anime/Dizi indir", "Ayarlar", "Çıkış yap"],
         )
         clear_console()
-        if choice == None:
-            raise KeyboardInterrupt
 
         if choice == "Anime/Dizi indir":
             cfg.read_and_check_config()
@@ -122,8 +113,17 @@ def starter():
                 folder_selected = folder_select()
             else:
                 folder_selected = cfg.default_folder
-            print(f"İndirilecek klasör --> {folder_selected}")
-            program(folder_selected, cfg.re_naming)
+            api.go_site()
+            clear_console()
+            try:
+                api.go_series()
+                links = api.get_episode_links()
+            except (AssertionError, KeyboardInterrupt, selenium.common.exceptions.InvalidArgumentException):
+                clear_console()
+                continue
+            video = Video(api.driver, api.wait_and_find_element)
+            video.download_episodes(links, folder_selected, cfg.re_naming)
+
             clear_console()
         if choice == "Ayarlar":
             settings()

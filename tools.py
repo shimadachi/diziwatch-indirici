@@ -6,7 +6,15 @@ import re
 
 class InquirerSelect:
 
-    def inq(message: str, choices: list, episode_select=False):
+    def inq(
+        message: str, choices: list, multiple_select=False, mandatory=True, search=False
+    ):
+        keybindings = {
+            "skip": [{"key": "c-c"}],
+            "interrupt": [{"key": "c-d"}],
+            "toggle-all": [{"key": ["c-a", "space"]}],
+        }
+
         style = get_style(
             {
                 "marker": "orange",
@@ -16,7 +24,7 @@ class InquirerSelect:
                 "answer": "purple",
             }
         )
-        if episode_select:
+        if multiple_select:
             return inquirer.select(
                 message=message,
                 choices=choices,
@@ -26,8 +34,26 @@ class InquirerSelect:
                 qmark="",
                 amark="",
                 border=True,
-                mandatory=True,
+                mandatory=mandatory,
+                mandatory_message= "Bir seçenek seçmelisiniz",
                 multiselect=True,
+                keybindings=keybindings,
+            ).execute()
+
+        if search:
+            return inquirer.fuzzy(
+                message=message,
+                choices=choices,
+                instruction=" ",
+                style=style,
+                qmark="",
+                amark="",
+                border=True,
+                mandatory=mandatory,
+                mandatory_message= "Bir seçenek seçmelisiniz",
+                multiselect=False,
+                keybindings=keybindings,
+                match_exact=True
             ).execute()
         else:
             return inquirer.select(
@@ -39,7 +65,9 @@ class InquirerSelect:
                 qmark="",
                 amark="",
                 border=True,
-                mandatory=True,
+                mandatory=mandatory,
+                mandatory_message= "Bir seçenek seçmelisiniz",
+                keybindings=keybindings,
             ).execute()
 
 

@@ -10,7 +10,7 @@ class Video:
     def __init__(self, driver, wait_and_find_element):
         self.driver = driver
         self.wait_and_find_element = wait_and_find_element
-        self.name_handler = NameHandler(self.driver, self.wait_and_find_element)
+        self.name_handler = NameHandler()
         self.series_name = self.name_handler.get_series_name()
 
     def set_quality_settings(self):
