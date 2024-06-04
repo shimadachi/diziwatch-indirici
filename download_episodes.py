@@ -6,7 +6,7 @@ from termcolor import colored
 import selenium.common.exceptions
 from rich.progress import Progress
 from site_interaction import Api
-
+import time
 
 class Video:
     def __init__(self, driver):
@@ -16,9 +16,9 @@ class Video:
         self.series_name = self.name_handler.get_series_name(self.wait_and_find_element)
 
     def set_quality_settings(self):
-
+        time.sleep(1)
         video_player = self.wait_and_find_element(
-            By.CSS_SELECTOR, "#player", wait_mode=1
+            By.CSS_SELECTOR, "#player", wait_mode=2,
         )
         video_player.click()
 

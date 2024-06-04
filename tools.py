@@ -84,7 +84,7 @@ class InquirerSelect:
 class NameHandler:
 
     def re_naming(self, name):
-        pattern = re.compile(rf"(.+)([0-9](?:[0-9]?)). Sezon ([0-9](?:[0-9]?)). Bölüm")
+        pattern = re.compile(rf"(.+)([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Sezon ([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Bölüm")
         try:
             groups = re.findall(pattern, name)
             return f"{groups[0][0]}S{groups[0][1]} E{groups[0][2]}"
