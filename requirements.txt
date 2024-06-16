@@ -1,5 +1,7 @@
+beautifulsoup4==4.12.3
 InquirerPy==0.3.4
+Requests==2.32.3
 rich==13.7.1
 selenium==4.21.0
 termcolor==2.4.0
-yt_dlp==2024.4.9
+yt_dlp==2024.5.27
