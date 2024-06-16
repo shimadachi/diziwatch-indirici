@@ -69,8 +69,7 @@ def settings():
         choices=[
             Choice(value=2, name=f"Yeniden İsimlendirme : {cfg.re_naming}"),
             Choice(value=1, name=f"Varsayılan Klasör: {cfg.default_folder}"),
-        ],
-        mandatory=False,
+        ],mandatory = False
     )
     if not choice:
         pass
@@ -103,7 +102,7 @@ def starter():
         choice = InquirerSelect.inq(
             message="Seçenekler",
             choices=["Anime/Dizi indir", "Ayarlar", "Çıkış yap"],
-            mandatory=False,
+            mandatory=True,
             def_ins_mes=False,
         )
 
@@ -127,6 +126,11 @@ def starter():
             try:
                 video.download_episodes(links, folder_selected, cfg.re_naming)
             except KeyboardInterrupt:
+                continue
+
+            confirm = False
+            confirm = InquirerSelect.inq(message = "", choices = "", confirm=True, mandatory = True)
+            if confirm:
                 continue
 
         if choice == "Ayarlar":

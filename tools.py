@@ -9,10 +9,11 @@ class InquirerSelect:
     def inq(
         message: str,
         choices: list,
-        multiple_select=False,
-        mandatory=True,
-        search=False,
         def_ins_mes=True,
+        mandatory=True,
+        multiple_select=False,
+        search=False,
+        confirm=False,
     ):
         if def_ins_mes:
             ins_mes = "Ana menüye dönmek için CTRL-C"
@@ -65,6 +66,15 @@ class InquirerSelect:
                 keybindings=keybindings,
                 match_exact=True,
             ).execute()
+        if confirm:
+            return inquirer.confirm(
+                message="Devam etmek istiyor musunuz?",
+                default=True,
+                mandatory=True,
+                reject_letter="y",
+                style=style,
+                qmark=""
+            ).execute()
         else:
             return inquirer.select(
                 message=message,
@@ -84,7 +94,9 @@ class InquirerSelect:
 class NameHandler:
 
     def re_naming(self, name):
-        pattern = re.compile(rf"(.+)([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Sezon ([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Bölüm")
+        pattern = re.compile(
+            rf"(.+)([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Sezon ([0-9](?:[0-9]?)(?:[0-9]?)(?:[0-9]?)). Bölüm"
+        )
         try:
             groups = re.findall(pattern, name)
             return f"{groups[0][0]}S{groups[0][1]} E{groups[0][2]}"

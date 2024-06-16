@@ -5,8 +5,8 @@ import re
 from termcolor import colored
 import selenium.common.exceptions
 from rich.progress import Progress
-from site_interaction import Api
 import time
+
 
 class Video:
     def __init__(self, driver):
@@ -16,22 +16,31 @@ class Video:
         self.series_name = self.name_handler.get_series_name(self.wait_and_find_element)
 
     def set_quality_settings(self):
+
         time.sleep(1)
         video_player = self.wait_and_find_element(
-            By.CSS_SELECTOR, "#player", wait_mode=2,
-        )
-        video_player.click()
+            By.CSS_SELECTOR,
+            "#player",
+            wait_mode=2,
+            wait_delay=0.5,
+            max_attempt=1,
+        ).click()
+
 
         setting_button = self.wait_and_find_element(
-            By.CSS_SELECTOR, "div.jw-icon:nth-child(15)", wait_mode=1
-        )
-        setting_button.click()
+            By.CSS_SELECTOR,
+            "div.jw-icon:nth-child(15)",
+            wait_mode=1,
+            wait_delay=0.5,
+            max_attempt=1,
+        ).click()
+
 
         video_quality_info_element = self.wait_and_find_element(
             By.CSS_SELECTOR,
             "#jw-player-settings-submenu-quality > div:nth-child(1)",
-            0.5,
-            1,
+            wait_delay=0.5,
+            max_attempt=1,
             wait_mode=2,
         )
         if video_quality_info_element:
@@ -77,24 +86,34 @@ class Video:
     ):
 
         for site in target_series_episode_links:
-            self.driver.get(site)
+            while True:
+                try:
+                    self.driver.get(site)
 
-            file_name = self.name_handler.filter_text(
-                self.wait_and_find_element(By.CSS_SELECTOR, "h1.title-border").text
-            )
+                    file_name = self.name_handler.filter_text(
+                        self.wait_and_find_element(
+                            By.CSS_SELECTOR, "h1.title-border"
+                        ).text
+                    )
 
-            if re_naming == "Acik":
-                file_name = self.name_handler.re_naming(file_name)
+                    if re_naming == "Acik":
+                        file_name = self.name_handler.re_naming(file_name)
 
-            try:
-                self.set_quality_settings()
-            except (
-                selenium.common.exceptions.NoSuchElementException,
-                selenium.common.exceptions.TimeoutException,
-            ):
-                pass
+                    try:
+                        self.set_quality_settings()
+                    except (
+                        selenium.common.exceptions.NoSuchElementException,
+                        selenium.common.exceptions.TimeoutException,
+                        AttributeError
+                    ):
+                        pass
+                    
 
-            self.download_video(self.series_name, file_name, path)
+                    self.download_video(self.series_name, file_name, path)
+                except selenium.common.StaleElementReferenceException:
+                    pass
+                else:
+                    break
 
     def ytdlp_hook(self, d):
         if d["status"] == "downloading":

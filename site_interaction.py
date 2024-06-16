@@ -1,9 +1,9 @@
 from webdriver import Webdriver
 from tools import InquirerSelect
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-import selenium.common.exceptions
 from rich.console import Console
+from bs4 import BeautifulSoup
+import requests
 
 
 class Api(Webdriver):
@@ -12,28 +12,27 @@ class Api(Webdriver):
         super().__init__()
 
     def go_site(self):
-        self.driver.get(
+
+        self.request_database = requests.get(
             "https://diziwatch.net/wp-admin/admin-ajax.php?action=data_fetch"
         )
 
     def search(self) -> list:
-        if not self.series_dict:
-            with Console().status(
-                "[yellow] Arama listesi yükleniyor",
-                spinner="point",
-                spinner_style="white",
-            ):
-                self.series_dict = {}
+        with Console().status(
+            "[yellow] Arama listesi yükleniyor",
+            spinner="point",
+            spinner_style="white",
+        ):
+            self.series_dict = {}
 
-                search_elements = self.wait_and_find_element(
-                    By.ID, "searchelement", elements_mode=True
-                )
-                for search_element in search_elements:
-                    href = search_element.find_element(
-                        By.XPATH, ".//div[@class='search-cat-img']/a"
-                    ).get_attribute("href")
-                    name = search_element.find_element(By.ID, "search-name").text
-                    self.series_dict.update({name: href})
+            soup = BeautifulSoup(self.request_database.text, "html.parser")
+
+            for text in soup.find_all("a"):
+                if not (series_name := text.get_text()):
+                    continue
+                series_link = text.get("href")
+
+                self.series_dict.update({series_name: series_link})
 
         series = InquirerSelect.inq(
             message="Arama: ",
@@ -65,16 +64,13 @@ class Api(Webdriver):
             season_opinion = InquirerSelect.inq(
                 message="Sezonlar : ", choices=list(season_list.keys()), mandatory=False
             )
+            if not season_opinion:
+                raise KeyboardInterrupt
             season_list[season_opinion].click()
 
     def get_episode_links(self) -> list:
-        try:
-            self.season_container()
-        except (
-            selenium.common.exceptions.NoSuchElementException,
-            selenium.common.exceptions.TimeoutException,
-        ):
-            pass
+
+        self.season_container()
 
         target_series_episodes_element = self.wait_and_find_element(
             By.XPATH,
