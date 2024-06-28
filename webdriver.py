@@ -19,7 +19,7 @@ class Webdriver:
         rp = wd + "/uBlock0_1.58.0.firefox.signed.xpi"
         options = webdriver.FirefoxOptions()
 
-        # options.add_argument("-headless")
+        options.add_argument("-headless")
         options.page_load_strategy = "eager"
         options.set_preference("permissions.default.image", 2)
         options.set_preference("media.volume_scale", "0.0")
