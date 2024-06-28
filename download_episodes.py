@@ -26,7 +26,6 @@ class Video:
             max_attempt=1,
         ).click()
 
-
         setting_button = self.wait_and_find_element(
             By.CSS_SELECTOR,
             "div.jw-icon:nth-child(15)",
@@ -34,7 +33,6 @@ class Video:
             wait_delay=0.5,
             max_attempt=1,
         ).click()
-
 
         video_quality_info_element = self.wait_and_find_element(
             By.CSS_SELECTOR,
@@ -62,6 +60,8 @@ class Video:
     def download_video(self, series_name, file_name, path=None):
         video_element = self.wait_and_find_element(By.CSS_SELECTOR, ".jw-video")
         src = video_element.get_attribute("src")
+        if "hydra" not in src:
+            raise AttributeError
         self.driver.get("about:blank")
         yt_dlp.std_headers["Referer"] = "https://diziwatch.net/"
         URL = src
@@ -104,13 +104,12 @@ class Video:
                     except (
                         selenium.common.exceptions.NoSuchElementException,
                         selenium.common.exceptions.TimeoutException,
-                        AttributeError
+                        AttributeError,
                     ):
                         pass
-                    
 
                     self.download_video(self.series_name, file_name, path)
-                except selenium.common.StaleElementReferenceException:
+                except (selenium.common.StaleElementReferenceException, AttributeError):
                     pass
                 else:
                     break

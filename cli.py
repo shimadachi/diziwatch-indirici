@@ -11,6 +11,7 @@ from InquirerPy.base.control import Choice
 from termcolor import colored
 import selenium.common.exceptions
 
+
 console = Console()
 clear_console = lambda: system("cls")
 api = Api()
@@ -62,6 +63,13 @@ def folder_select():
 cfg = Config()
 
 
+def sel_starter():
+    with console.status(
+        "[green] Webdriver Başlatılıyor", spinner="point", spinner_style="white"
+    ):
+        api.driver_start()
+
+
 def settings():
     cfg.read_and_check_config()
     choice = InquirerSelect.inq(
@@ -69,7 +77,8 @@ def settings():
         choices=[
             Choice(value=2, name=f"Yeniden İsimlendirme : {cfg.re_naming}"),
             Choice(value=1, name=f"Varsayılan Klasör: {cfg.default_folder}"),
-        ],mandatory = False
+        ],
+        mandatory=False,
     )
     if not choice:
         pass
@@ -91,13 +100,13 @@ def settings():
 
 
 def starter():
-    clear_console()
-    with console.status(
-        "[green] Webdriver Başlatılıyor", spinner="point", spinner_style="white"
-    ):
-        api.driver_start()
+    is_open = False
 
     while True:
+        if not is_open:
+            clear_console()
+            sel_starter()
+            is_open = True
         clear_console()
         choice = InquirerSelect.inq(
             message="Seçenekler",
@@ -107,12 +116,15 @@ def starter():
         )
 
         if choice == "Anime/Dizi indir":
+
             cfg.read_and_check_config()
             if cfg.default_folder == "Yok":
                 folder_selected = folder_select()
             else:
                 folder_selected = cfg.default_folder
+
             api.go_site()
+
             try:
                 api.go_series()
                 links = api.get_episode_links()
@@ -122,14 +134,19 @@ def starter():
                 selenium.common.exceptions.InvalidArgumentException,
             ):
                 continue
-            video = Video(api)
+
             try:
+                video = Video(api)
                 video.download_episodes(links, folder_selected, cfg.re_naming)
             except KeyboardInterrupt:
+                is_open = False
                 continue
 
             confirm = False
-            confirm = InquirerSelect.inq(message = "", choices = "", confirm=True, mandatory = True)
+            confirm = InquirerSelect.inq(
+                message="", choices="", confirm=True, mandatory=True
+            )
+
             if confirm:
                 continue
 
