@@ -14,7 +14,7 @@ class Webdriver:
         if getattr(sys, "frozen", False):
             wd = sys._MEIPASS
         else:
-            wd = os.getcwd()
+            wd = os.getcwd
         rp = wd + "/uBlock0_1.58.0.firefox.signed.xpi"
         options = webdriver.FirefoxOptions()
 
@@ -25,6 +25,12 @@ class Webdriver:
 
         self.driver = webdriver.Firefox(options=options)
         self.driver.install_addon(rp)
+
+    def driver_quit(self):
+        try:
+            self.driver.quit()
+        except AttributeError:
+            pass
 
     # 0 : default = wait located return element(s)
     # 1 : wait clickable return element(s)
