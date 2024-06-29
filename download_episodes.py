@@ -104,12 +104,12 @@ class Video:
                     except (
                         selenium.common.exceptions.NoSuchElementException,
                         selenium.common.exceptions.TimeoutException,
-                        AttributeError,
+                        
                     ):
                         pass
 
                     self.download_video(self.series_name, file_name, path)
-                except (selenium.common.StaleElementReferenceException, AttributeError):
+                except (selenium.common.StaleElementReferenceException,AttributeError ):
                     pass
                 else:
                     break
