@@ -6,6 +6,7 @@ from termcolor import colored
 import selenium.common.exceptions
 from rich.progress import Progress
 from os import name
+import time
 
 
 class Video:
