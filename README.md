@@ -19,7 +19,7 @@ diziwatch.net icin yt-dlp ve selenium kutuphanelerini kullanan basit bir script
 
 Gerekli kütüphaneler için
 ```bash
-python -r requirements.txt
+pip install -r requirements.txt
 ```
 Kullanmanız için mutlaka geckodriver kurulu ve PATH'e ekli olmalı  
 [Geckodriver](https://github.com/mozilla/geckodriver/releases)
