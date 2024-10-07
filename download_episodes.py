@@ -5,7 +5,7 @@ import re
 from termcolor import colored
 import selenium.common.exceptions
 from rich.progress import Progress
-import time
+from os import name
 
 
 class Video:
@@ -58,6 +58,13 @@ class Video:
             sorted_resolutions[0][1].click()
 
     def download_video(self, series_name, file_name, path=None):
+
+        match name:
+            case "nt":
+                outmpl = rf"{path}\{series_name}/{file_name}.%(ext)s"
+            case "posix":
+                outmpl = rf"{path}/{series_name}/{file_name}.%(ext)s"
+
         video_element = self.wait_and_find_element(By.CSS_SELECTOR, ".jw-video")
         src = video_element.get_attribute("src")
         if "hydra" not in src:
@@ -66,7 +73,7 @@ class Video:
         yt_dlp.std_headers["Referer"] = "https://diziwatch.net/"
         URL = src
         ydl_opts = {
-            "outtmpl": rf"{path}\{series_name}/{file_name}.%(ext)s",
+            "outtmpl": outmpl,
             "ignoreerrors": True,
             "progress_hooks": [lambda d: self.ytdlp_hook(d)],
             "logger": Yt_Logger(),
