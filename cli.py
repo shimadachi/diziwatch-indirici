@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
-from os import system
+from os import system, name
 from rich.console import Console
 import sys
 from site_interaction import Api
@@ -13,7 +13,14 @@ import selenium.common.exceptions
 
 
 console = Console()
-clear_console = lambda: system("cls")
+
+match name:
+    case "nt":
+        clear_console = lambda: system("cls")
+    case "posix":
+        clear_console = lambda: system("clear")
+
+
 api = Api()
 
 

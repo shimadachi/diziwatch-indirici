@@ -14,7 +14,7 @@ class Webdriver:
         if getattr(sys, "frozen", False):
             wd = sys._MEIPASS
         else:
-            wd = os.getcwd
+            wd = os.getcwd()
         rp = wd + "/uBlock0_1.58.0.firefox.signed.xpi"
         options = webdriver.FirefoxOptions()
 
