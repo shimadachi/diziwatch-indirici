@@ -68,8 +68,7 @@ class Video:
 
         video_element = self.wait_and_find_element(By.CSS_SELECTOR, ".jw-video")
         src = video_element.get_attribute("src")
-        if "hydra" not in src:
-            raise AttributeError
+
         self.driver.get("about:blank")
         yt_dlp.std_headers["Referer"] = "https://diziwatch.net/"
         URL = src
@@ -112,7 +111,6 @@ class Video:
                     except (
                         selenium.common.exceptions.NoSuchElementException,
                         selenium.common.exceptions.TimeoutException,
-                        AttributeError,
                     ):
                         pass
 
